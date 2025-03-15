@@ -166,7 +166,7 @@ export default {
         case 'ping':
           return '测试本机到目标主机的连通性和响应时间'
         case 'mtr':
-          return '结合ping和traceroute的综合网络诊断工具'
+          return '结合 ping 和 traceroute 的综合网络诊断工具'
         default:
           return ''
       }

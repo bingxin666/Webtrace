@@ -18,9 +18,9 @@
     
     <h3 style="margin-top: 15px">常见问题</h3>
     <p style="font-weight: bold">问：为什么命令执行时间较长？</p>
-    <p>答：网络诊断工具需要等待网络响应，根据网络状况和目标距离，可能需要3-60秒不等。</p>
-    <p style="font-weight: bold; margin-top: 10px">问：为什么有些IP地址无法访问？</p>
-    <p>答：这可能是由于防火墙策略、路由问题或目标主机不响应ICMP包所致。</p>
+    <p>答：网络诊断工具需要等待网络响应，根据网络状况和目标距离，可能需要 3-60 秒不等。</p>
+    <p style="font-weight: bold; margin-top: 10px">问：为什么有些 IP 地址无法访问？</p>
+    <p>答：这可能是由于防火墙策略、路由问题或目标主机不响应 ICMP 包所致。</p>
   </div>
 </template>
 
