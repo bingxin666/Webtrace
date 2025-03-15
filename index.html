@@ -2,167 +2,410 @@
 <html lang="zh-cn">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingxin WebTrace</title>
-    <link rel="stylesheet" href="https://unpkg.com/office-ui-fabric-core@11.1.0/dist/css/fabric.min.css">
-    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@fluentui/react@8/dist/fluentui-react.js"></script>
+    <!-- 引入 Element Plus -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- 引入字体图标 -->
+    <link rel="stylesheet" href="https://at.alicdn.com/t/font_2410206_mfj6e1vbwo.css">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f3f2f1;
+        :root {
+            --el-color-primary: #409eff;
+            --header-height: 60px;
+            --footer-height: 60px;
+            --sidebar-width: 250px;
+        }
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            height: 100%;
+            background-color: #f6f6f6;
+            color: #333;
+            line-height: 1.5;
+        }
+        .app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(90deg, #1976d2, #2196f3);
+            color: white;
+            padding: 0 20px;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .logo .icon {
+            margin-right: 8px;
+            font-size: 1.8rem;
+        }
+        .navigation {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 15px 0;
+            background-color: #f0f2f5;
+            margin-bottom: 10px;
         }
-        .container {
-            background-color: #ffffff;
+        .nav-button {
+            margin: 0 10px;
+        }
+        .main-content {
+            flex: 1;
             padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            min-width: 400px;
-            max-width: 1200px;
-            width: 100%;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .form-group {
-            min-width: 200px;
-            margin-bottom: 15px;
+        .tool-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 25px;
             width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
         }
-        .spinner {
-            display: none;
-            margin: 20px auto;
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top: 4px solid #0078d4;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .result-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 800px;
+            padding: 15px 25px;
+            flex: 1;
+            margin-bottom: 20px;
+            overflow: auto;
+            position: relative;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .result-content {
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
         }
         .footer {
-            text-align: center;
-            margin-top: 20px;
+            height: var(--footer-height);
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #e9ecef;
+            padding: 0 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+        .empty-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #909399;
+        }
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .command-description {
+            margin-top: 15px;
+            color: #67c23a;
+        }
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .target-input {
+            flex: 1;
+            margin-right: 15px;
+        }
+        .time-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.8rem;
+            color: #909399;
+        }
+        @media (max-width: 768px) {
+            .tool-panel, .result-panel {
+                width: 95%;
+            }
+            .action-row {
+                flex-direction: column;
+            }
+            .target-input {
+                margin-right: 0;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
         }
     </style>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <div class="app-container">
+            <header class="header">
+                <div class="logo"></div>
+                    <i class="el-icon-connection icon"></i>
+                    <span>Bingxin WebTrace</span>
+                </div>
+            </header>
 
+            <div class="navigation">
+                <el-button class="nav-button" type="primary" plain>
+                    <i class="el-icon-s-home"></i> 首页
+                </el-button>
+                <el-button class="nav-button" type="info" plain>
+                    <i class="el-icon-info"></i> 关于
+                </el-button>
+                <el-button class="nav-button" type="success" plain>
+                    <i class="el-icon-help"></i> 帮助
+                </el-button>
+            </div>
+
+            <main class="main-content">
+                <div class="tool-panel">
+                    <h2><i class="el-icon-monitor"></i> 网络诊断工具</h2>
+                    <el-divider></el-divider>
+
+                    <div>
+                        <el-form :model="form" label-position="top">
+                            <el-form-item label="选择命令">
+                                <el-select v-model="form.command" style="width: 100%">
+                                    <el-option v-for="cmd in commandOptions" 
+                                           :key="cmd.value" 
+                                           :label="cmd.label" 
+                                           :value="cmd.value">
+                                        <span>{{ cmd.label }}</span>
+                                        <span style="float: right; color: #8492a6; font-size: 13px">
+                                            {{ cmd.description }}
+                                        </span>
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+
+                            <div class="command-description">
+                                <i class="el-icon-info-filled"></i> {{ getCommandDescription() }}
+                            </div>
+
+                            <el-form-item label="目标地址 (IPv4/IPv6)" style="margin-top: 15px">
+                                <div class="action-row">
+                                    <el-input 
+                                        v-model="form.target" 
+                                        class="target-input"
+                                        placeholder="例如: 10.50.0.41 或 fddd:5050::1:41"
+                                        :prefix-icon="'el-icon-position'"
+                                        :disabled="loading">
+                                    </el-input>
+                                    <el-button 
+                                        type="primary" 
+                                        @click="executeCommand" 
+                                        :loading="loading" 
+                                        :disabled="!form.target">
+                                        <i class="el-icon-video-play"></i> 执行
+                                    </el-button>
+                                </div>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div class="time-badge" v-if="output">
+                        {{ currentTime }}
+                <div class="result-panel">
+                    <div class="time-badge" v-if="output">
+                        {{ currentTime }}
+                    </div>
+                    
+                    <transition name="fade">
+                        <div v-if="loading" style="text-align: center; padding: 40px 0;">
+                            <el-spin animation="rotate" size="large">
+                                <i class="el-icon-loading" style="font-size: 2rem"></i>
+                            </el-spin>
+                            <p style="margin-top: 15px; color: #909399">
+                                请耐心等待，命令执行中...<br>
+                                <small>可能需要3-60秒</small>
+                            </p>
+                        </div>
+                        <div v-else-if="output" class="result-content">{{ output }}</div>
+                        <div v-else class="empty-result">
+                            <i class="el-icon-terminal empty-icon"></i>
+                            <p>在上方填写目标地址并选择命令后点击"执行"</p>
+                        </div>
+                    </transition>
+                </div>
+            </main>
+
+            <footer class="footer">
+                <div>
+                    <span>{{ quote }}</span>
+                    <span style="margin-left: 15px; opacity: 0.6">{{ currentTime }}</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- 引入 Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Element Plus -->
+    <script src="https://unpkg.com/element-plus"></script>
+    <!-- 引入 Element Plus 图标 -->
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    
     <script>
-        const { useState, useEffect } = React;
-        const { PrimaryButton, Dropdown, TextField, Spinner, SpinnerSize, initializeIcons, Stack, Text, CommandBar } = FluentUIReact;
-
-        initializeIcons();
-
-        const commandOptions = [
-            { key: 'traceroute', text: 'Traceroute' },
-            { key: 'ping', text: 'Ping' },
-            { key: 'mtr', text: 'MTR' }
-        ];
-
-        const navItems = [
-            {
-                key: 'home',
-                text: 'Home',
-                iconProps: { iconName: 'Home' },
-                href: '#'
-            },
-            {
-                key: 'about',
-                text: 'About',
-                iconProps: { iconName: 'Info' },
-                href: '#'
-            }
-        ];
-
-        function App() {
-            const [command, setCommand] = useState('traceroute');
-            const [target, setTarget] = useState('');
-            const [output, setOutput] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
-            const [quote, setQuote] = useState('');
-
-            useEffect(() => {
-                const timer = setInterval(() => {
-                    setCurrentTime(new Date().toLocaleTimeString());
-                }, 1000);
-
-                fetch('https://v1.hitokoto.cn')
-                    .then(response => response.json())
-                    .then(data => setQuote(data.hitokoto));
-
-                return () => clearInterval(timer);
-            }, []);
-
-            const executeCommand = () => {
-                setLoading(true);
-                setOutput('');
-                fetch('http://localhost:5000/execute', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ command, target })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    setOutput(data.result);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    setOutput('执行命令时出错：' + error);
-                    setLoading(false);
+        const { createApp, ref, onMounted, onUnmounted, computed } = Vue;
+        
+        const app = createApp({
+            setup() {
+                // 状态
+                const form = ref({
+                    command: 'traceroute',
+                    target: ''
                 });
-            };
-
-            return (
-                React.createElement('div', { className: 'container' },
-                    React.createElement(CommandBar, { items: navItems }),
-                    React.createElement('h1', { className: 'ms-fontSize-32 ms-fontWeight-semibold' }, 'Bingxin WebTrace'),
-                    React.createElement(Stack, { tokens: { childrenGap: 15 }, horizontalAlign: 'center' },
-                        React.createElement('div', { className: 'form-group' },
-                            React.createElement(Text, { variant: 'large' }, '选择命令'),
-                            React.createElement(Dropdown, {
-                                placeholder: '选择命令',
-                                options: commandOptions,
-                                selectedKey: command,
-                                onChange: (e, option) => setCommand(option.key),
-                                styles: { dropdown: { width: '100%' } }
+                const output = ref('');
+                const loading = ref(false);
+                const currentTime = ref(new Date().toLocaleTimeString());
+                const quote = ref('');
+                const isDarkMode = ref(false);
+                
+                // 命令选项
+                const commandOptions = [
+                    { value: 'traceroute', label: 'Traceroute', description: '跟踪网络路由' },
+                    { value: 'ping', label: 'Ping', description: '网络连通性测试' },
+                    { value: 'mtr', label: 'MTR', description: '实时网络诊断' }
+                ];
+                
+                // 计时器
+                let timer;
+                
+                onMounted(() => {
+                    // 定时更新时间
+                    timer = setInterval(() => {
+                        currentTime.value = new Date().toLocaleTimeString();
+                    }, 1000);
+                    
+                    // 获取一言
+                    fetchQuote();
+                    
+                    // 恢复暗色模式设置
+                    const savedDarkMode = localStorage.getItem('darkMode');
+                    if (savedDarkMode) {
+                        isDarkMode.value = savedDarkMode === 'true';
+                    }
+                });
+                
+                onUnmounted(() => {
+                    clearInterval(timer);
+                });
+                
+                // 获取一言
+                const fetchQuote = async () => {
+                    try {
+                        const response = await fetch('https://v1.hitokoto.cn');
+                        const data = await response.json();
+                        quote.value = data.hitokoto;
+                    } catch (error) {
+                        console.error('获取一言失败:', error);
+                        quote.value = '青，取之于蓝而青于蓝。';
+                    }
+                };
+                
+                // 执行命令
+                const executeCommand = async () => {
+                    if (!form.value.target) {
+                        ElementPlus.ElMessage({
+                            message: '请输入目标地址',
+                            type: 'warning'
+                        });
+                        return;
+                    }
+                    
+                    loading.value = true;
+                    output.value = '';
+                    
+                    try {
+                        const response = await fetch('http://localhost:5004/execute', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                command: form.value.command,
+                                target: form.value.target
                             })
-                        ),
-                        React.createElement('div', { className: 'form-group' },
-                            React.createElement(Text, { variant: 'large' }, '目标地址（IPv4/IPv6）'),
-                            React.createElement(TextField, {
-                                placeholder: '例如：10.50.0.41 或 fddd:5050::1:41',
-                                value: target,
-                                onChange: (e, newValue) => setTarget(newValue),
-                                styles: { fieldGroup: { width: '100%' } }
-                            })
-                        ),
-                        React.createElement(PrimaryButton, { text: '执行', onClick: executeCommand }),
-                        React.createElement(Text, { variant: 'small', styles: { root: { marginTop: 10 } } }, '请耐心等待3-60秒钟'),
-                        loading && React.createElement(Spinner, { size: SpinnerSize.large }),
-                        React.createElement('pre', null, output),
-                        React.createElement('div', { className: 'footer' },
-                            React.createElement(Text, { variant: 'medium' }, quote)
-                        )
-                    )
-                )
-            );
-        }
-
-        ReactDOM.render(React.createElement(App), document.getElementById('app'));
+                        });
+                        
+                        const data = await response.json();
+                        output.value = data.result;
+                    } catch (error) {
+                        console.error('执行命令出错:', error);
+                        output.value = `执行命令时出错：${error.message}`;
+                        ElementPlus.ElMessage.error('命令执行失败，请检查服务器状态');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+                
+                // 获取命令描述
+                const getCommandDescription = () => {
+                    switch (form.value.command) {
+                        case 'traceroute':
+                            return '追踪数据包从本机到目标主机经过的路由节点';
+                        case 'ping':
+                            return '测试本机到目标主机的连通性和响应时间';
+                        case 'mtr':
+                            return '结合ping和traceroute的综合网络诊断工具';
+                        default:
+                            return '';
+                    }
+                };
+                
+                // 切换暗色模式
+                const toggleDarkMode = () => {
+                    isDarkMode.value = !isDarkMode.value;
+                    localStorage.setItem('darkMode', isDarkMode.value);
+                };
+                
+                return {
+                    form,
+                    output,
+                    loading,
+                    currentTime,
+                    quote,
+                    commandOptions,
+                    isDarkMode,
+                    executeCommand,
+                    getCommandDescription,
+                    toggleDarkMode
+                };
+            }
+        });
+        
+        app.use(ElementPlus);
+        app.mount('#app');
     </script>
 </body>
 </html>
