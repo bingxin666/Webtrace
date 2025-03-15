@@ -6,8 +6,6 @@
     <title>Bingxin WebTrace</title>
     <!-- 引入 Element Plus -->
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <!-- 引入字体图标 -->
-    <link rel="stylesheet" href="https://at.alicdn.com/t/font_2410206_mfj6e1vbwo.css">
     <style>
         :root {
             --el-color-primary: #409eff;
@@ -161,112 +159,43 @@
         .fade-enter-from, .fade-leave-to {
             opacity: 0;
         }
+        .dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        .dark-mode .tool-panel,
+        .dark-mode .result-panel {
+            background-color: #2a2a2a;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dark-mode .header {
+            background: linear-gradient(90deg, #0d47a1, #1565c0);
+        }
+        
+        .dark-mode .footer {
+            background-color: #2a2a2a;
+            border-top: 1px solid #3a3a3a;
+            color: #909399;
+        }
+        
+        .dark-mode .navigation {
+            background-color: #2a2a2a;
+        }
+        
+        .dark-mode .empty-result {
+            color: #909399;
+        }
+        
+        .theme-switch {
+            cursor: pointer;
+            margin-left: 15px;
+        }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="app-container">
-            <header class="header">
-                <div class="logo"></div>
-                    <i class="el-icon-connection icon"></i>
-                    <span>Bingxin WebTrace</span>
-                </div>
-            </header>
-
-            <div class="navigation">
-                <el-button class="nav-button" type="primary" plain>
-                    <i class="el-icon-s-home"></i> 首页
-                </el-button>
-                <el-button class="nav-button" type="info" plain>
-                    <i class="el-icon-info"></i> 关于
-                </el-button>
-                <el-button class="nav-button" type="success" plain>
-                    <i class="el-icon-help"></i> 帮助
-                </el-button>
-            </div>
-
-            <main class="main-content">
-                <div class="tool-panel">
-                    <h2><i class="el-icon-monitor"></i> 网络诊断工具</h2>
-                    <el-divider></el-divider>
-
-                    <div>
-                        <el-form :model="form" label-position="top">
-                            <el-form-item label="选择命令">
-                                <el-select v-model="form.command" style="width: 100%">
-                                    <el-option v-for="cmd in commandOptions" 
-                                           :key="cmd.value" 
-                                           :label="cmd.label" 
-                                           :value="cmd.value">
-                                        <span>{{ cmd.label }}</span>
-                                        <span style="float: right; color: #8492a6; font-size: 13px">
-                                            {{ cmd.description }}
-                                        </span>
-                                    </el-option>
-                                </el-select>
-                            </el-form-item>
-
-                            <div class="command-description">
-                                <i class="el-icon-info-filled"></i> {{ getCommandDescription() }}
-                            </div>
-
-                            <el-form-item label="目标地址 (IPv4/IPv6)" style="margin-top: 15px">
-                                <div class="action-row">
-                                    <el-input 
-                                        v-model="form.target" 
-                                        class="target-input"
-                                        placeholder="例如: 10.50.0.41 或 fddd:5050::1:41"
-                                        :prefix-icon="'el-icon-position'"
-                                        :disabled="loading">
-                                    </el-input>
-                                    <el-button 
-                                        type="primary" 
-                                        @click="executeCommand" 
-                                        :loading="loading" 
-                                        :disabled="!form.target">
-                                        <i class="el-icon-video-play"></i> 执行
-                                    </el-button>
-                                </div>
-                            </el-form-item>
-                        </el-form>
-                    </div>
-                </div>
-
-                <div class="result-panel">
-                    <div class="time-badge" v-if="output">
-                        {{ currentTime }}
-                <div class="result-panel">
-                    <div class="time-badge" v-if="output">
-                        {{ currentTime }}
-                    </div>
-                    
-                    <transition name="fade">
-                        <div v-if="loading" style="text-align: center; padding: 40px 0;">
-                            <el-spin animation="rotate" size="large">
-                                <i class="el-icon-loading" style="font-size: 2rem"></i>
-                            </el-spin>
-                            <p style="margin-top: 15px; color: #909399">
-                                请耐心等待，命令执行中...<br>
-                                <small>可能需要3-60秒</small>
-                            </p>
-                        </div>
-                        <div v-else-if="output" class="result-content">{{ output }}</div>
-                        <div v-else class="empty-result">
-                            <i class="el-icon-terminal empty-icon"></i>
-                            <p>在上方填写目标地址并选择命令后点击"执行"</p>
-                        </div>
-                    </transition>
-                </div>
-            </main>
-
-            <footer class="footer">
-                <div>
-                    <span>{{ quote }}</span>
-                    <span style="margin-left: 15px; opacity: 0.6">{{ currentTime }}</span>
-                </div>
-            </footer>
-        </div>
-    </div>
+    <div id="app"></div>
 
     <!-- 引入 Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -276,20 +205,157 @@
     <script src="https://unpkg.com/@element-plus/icons-vue"></script>
     
     <script>
-        const { createApp, ref, onMounted, onUnmounted, computed } = Vue;
+        const { createApp, ref, reactive, onMounted, onUnmounted, computed, h } = Vue;
+        const { ElButton, ElInput, ElSelect, ElOption, ElForm, ElFormItem, ElDivider, ElMessage } = ElementPlus;
         
-        const app = createApp({
+        // 主应用组件模板
+        const App = {
             setup() {
-                // 状态
-                const form = ref({
+                const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
+                const currentView = ref('home');
+                
+                // 更新文档主题
+                const updateTheme = () => {
+                    if (isDarkMode.value) {
+                        document.body.classList.add('dark-mode');
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                    }
+                };
+                
+                // 切换主题
+                const toggleDarkMode = () => {
+                    isDarkMode.value = !isDarkMode.value;
+                    localStorage.setItem('darkMode', isDarkMode.value);
+                    updateTheme();
+                };
+                
+                // 切换视图
+                const changeView = (view) => {
+                    currentView.value = view;
+                };
+                
+                onMounted(() => {
+                    updateTheme();
+                });
+                
+                return {
+                    isDarkMode,
+                    currentView,
+                    toggleDarkMode,
+                    changeView
+                };
+            },
+            
+            render() {
+                return h('div', { class: 'app-container' }, [
+                    // 页面头部
+                    h(AppHeader, { 
+                        onToggleDarkMode: this.toggleDarkMode,
+                        isDarkMode: this.isDarkMode 
+                    }),
+                    
+                    // 导航栏
+                    h(AppNavigation, { 
+                        currentView: this.currentView,
+                        onChangeView: this.changeView 
+                    }),
+                    
+                    // 主内容区
+                    h('main', { class: 'main-content' }, [
+                        this.currentView === 'home' ? h(HomeView) :
+                        this.currentView === 'about' ? h(AboutView) :
+                        h(HelpView)
+                    ]),
+                    
+                    // 页面底部
+                    h(AppFooter)
+                ]);
+            }
+        };
+        
+        // 头部组件
+        const AppHeader = {
+            props: {
+                isDarkMode: Boolean
+            },
+            emits: ['toggleDarkMode'],
+            setup(props, { emit }) {
+                return {
+                    toggleDarkMode: () => emit('toggleDarkMode')
+                };
+            },
+            render() {
+                return h('header', { class: 'header' }, [
+                    h('div', { class: 'logo' }, [
+                        h(resolveComponent('el-icon-connection')),
+                        h('span', ' Bingxin WebTrace')
+                    ]),
+                    h('div', { class: 'theme-switch', onClick: this.toggleDarkMode }, [
+                        this.isDarkMode
+                            ? h(resolveComponent('el-icon-sunny'))
+                            : h(resolveComponent('el-icon-moon'))
+                    ])
+                ]);
+            }
+        };
+        
+        // 导航栏组件
+        const AppNavigation = {
+            props: {
+                currentView: String
+            },
+            emits: ['changeView'],
+            setup(props, { emit }) {
+                return {
+                    navigateTo: (view) => emit('changeView', view)
+                };
+            },
+            render() {
+                return h('div', { class: 'navigation' }, [
+                    h(ElButton, {
+                        class: 'nav-button',
+                        type: this.currentView === 'home' ? 'primary' : 'default',
+                        plain: true,
+                        onClick: () => this.navigateTo('home')
+                    }, () => [
+                        h(resolveComponent('el-icon-house')),
+                        ' 首页'
+                    ]),
+                    
+                    h(ElButton, {
+                        class: 'nav-button',
+                        type: this.currentView === 'about' ? 'primary' : 'info',
+                        plain: true,
+                        onClick: () => this.navigateTo('about')
+                    }, () => [
+                        h(resolveComponent('el-icon-info-filled')),
+                        ' 关于'
+                    ]),
+                    
+                    h(ElButton, {
+                        class: 'nav-button',
+                        type: this.currentView === 'help' ? 'primary' : 'success',
+                        plain: true,
+                        onClick: () => this.navigateTo('help')
+                    }, () => [
+                        h(resolveComponent('el-icon-question-filled')),
+                        ' 帮助'
+                    ])
+                ]);
+            }
+        };
+        
+        // 主页视图
+        const HomeView = {
+            setup() {
+                const form = reactive({
                     command: 'traceroute',
                     target: ''
                 });
                 const output = ref('');
                 const loading = ref(false);
                 const currentTime = ref(new Date().toLocaleTimeString());
-                const quote = ref('');
-                const isDarkMode = ref(false);
                 
                 // 命令选项
                 const commandOptions = [
@@ -306,37 +372,16 @@
                     timer = setInterval(() => {
                         currentTime.value = new Date().toLocaleTimeString();
                     }, 1000);
-                    
-                    // 获取一言
-                    fetchQuote();
-                    
-                    // 恢复暗色模式设置
-                    const savedDarkMode = localStorage.getItem('darkMode');
-                    if (savedDarkMode) {
-                        isDarkMode.value = savedDarkMode === 'true';
-                    }
                 });
                 
                 onUnmounted(() => {
                     clearInterval(timer);
                 });
                 
-                // 获取一言
-                const fetchQuote = async () => {
-                    try {
-                        const response = await fetch('https://v1.hitokoto.cn');
-                        const data = await response.json();
-                        quote.value = data.hitokoto;
-                    } catch (error) {
-                        console.error('获取一言失败:', error);
-                        quote.value = '青，取之于蓝而青于蓝。';
-                    }
-                };
-                
                 // 执行命令
                 const executeCommand = async () => {
-                    if (!form.value.target) {
-                        ElementPlus.ElMessage({
+                    if (!form.target) {
+                        ElMessage({
                             message: '请输入目标地址',
                             type: 'warning'
                         });
@@ -353,8 +398,8 @@
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                command: form.value.command,
-                                target: form.value.target
+                                command: form.command,
+                                target: form.target
                             })
                         });
                         
@@ -363,7 +408,7 @@
                     } catch (error) {
                         console.error('执行命令出错:', error);
                         output.value = `执行命令时出错：${error.message}`;
-                        ElementPlus.ElMessage.error('命令执行失败，请检查服务器状态');
+                        ElMessage.error('命令执行失败，请检查服务器状态');
                     } finally {
                         loading.value = false;
                     }
@@ -371,7 +416,7 @@
                 
                 // 获取命令描述
                 const getCommandDescription = () => {
-                    switch (form.value.command) {
+                    switch (form.command) {
                         case 'traceroute':
                             return '追踪数据包从本机到目标主机经过的路由节点';
                         case 'ping':
@@ -383,28 +428,246 @@
                     }
                 };
                 
-                // 切换暗色模式
-                const toggleDarkMode = () => {
-                    isDarkMode.value = !isDarkMode.value;
-                    localStorage.setItem('darkMode', isDarkMode.value);
-                };
-                
                 return {
                     form,
                     output,
                     loading,
                     currentTime,
-                    quote,
                     commandOptions,
-                    isDarkMode,
                     executeCommand,
-                    getCommandDescription,
-                    toggleDarkMode
+                    getCommandDescription
                 };
+            },
+            render() {
+                return h('div', [
+                    // 工具面板
+                    h('div', { class: 'tool-panel' }, [
+                        h('h2', [
+                            h(resolveComponent('el-icon-monitor')),
+                            ' 网络诊断工具'
+                        ]),
+                        h(ElDivider),
+                        h(ElForm, { model: this.form, labelPosition: 'top' }, {
+                            default: () => [
+                                h(ElFormItem, { label: '选择命令' }, {
+                                    default: () => h(ElSelect, {
+                                        modelValue: this.form.command,
+                                        'onUpdate:modelValue': (val) => this.form.command = val,
+                                        style: { width: '100%' }
+                                    }, {
+                                        default: () => this.commandOptions.map(cmd => 
+                                            h(ElOption, {
+                                                key: cmd.value,
+                                                label: cmd.label,
+                                                value: cmd.value
+                                            }, {
+                                                default: () => [
+                                                    h('span', cmd.label),
+                                                    h('span', {
+                                                        style: {
+                                                            float: 'right',
+                                                            color: '#8492a6',
+                                                            fontSize: '13px'
+                                                        }
+                                                    }, cmd.description)
+                                                ]
+                                            })
+                                        )
+                                    })
+                                }),
+                                h('div', { class: 'command-description' }, [
+                                    h(resolveComponent('el-icon-info-filled')),
+                                    ' ' + this.getCommandDescription()
+                                ]),
+                                h(ElFormItem, {
+                                    label: '目标地址 (IPv4/IPv6)',
+                                    style: { marginTop: '15px' }
+                                }, {
+                                    default: () => h('div', { class: 'action-row' }, [
+                                        h(ElInput, {
+                                            modelValue: this.form.target,
+                                            'onUpdate:modelValue': (val) => this.form.target = val,
+                                            class: 'target-input',
+                                            placeholder: '例如: 10.50.0.41 或 fddd:5050::1:41',
+                                            prefixIcon: 'el-icon-position',
+                                            disabled: this.loading
+                                        }),
+                                        h(ElButton, {
+                                            type: 'primary',
+                                            onClick: this.executeCommand,
+                                            loading: this.loading,
+                                            disabled: !this.form.target
+                                        }, {
+                                            default: () => [
+                                                h(resolveComponent('el-icon-video-play')),
+                                                ' 执行'
+                                            ]
+                                        })
+                                    ])
+                                })
+                            ]
+                        })
+                    ]),
+                    
+                    // 结果面板
+                    h('div', { class: 'result-panel' }, [
+                        this.output && h('div', { class: 'time-badge' }, this.currentTime),
+                        this.loading 
+                            ? h('div', { style: { textAlign: 'center', padding: '40px 0' } }, [
+                                h('div', { class: 'el-loading-spinner' }, [
+                                    h(resolveComponent('el-icon-loading'), { style: { fontSize: '2rem' } })
+                                ]),
+                                h('p', { style: { marginTop: '15px', color: '#909399' } }, [
+                                    '请耐心等待，命令执行中...',
+                                    h('br'),
+                                    h('small', '可能需要3-60秒')
+                                ])
+                            ])
+                            : this.output
+                                ? h('div', { class: 'result-content' }, this.output)
+                                : h('div', { class: 'empty-result' }, [
+                                    h(resolveComponent('el-icon-terminal'), { class: 'empty-icon' }),
+                                    h('p', '在上方填写目标地址并选择命令后点击"执行"')
+                                ])
+                    ])
+                ]);
             }
-        });
+        };
+        
+        // 关于页面
+        const AboutView = {
+            render() {
+                return h('div', { class: 'tool-panel' }, [
+                    h('h2', [h(resolveComponent('el-icon-info-filled')), ' 关于 WebTrace']),
+                    h(ElDivider),
+                    h('p', 'WebTrace 是一款网络诊断工具，旨在帮助用户快速诊断网络连接问题。'),
+                    h('p', '本工具基于Vue 3和Element Plus开发，提供了traceroute、ping和mtr等功能。'),
+                    h('h3', { style: { marginTop: '20px' } }, '特性'),
+                    h('ul', { style: { paddingLeft: '20px' } }, [
+                        h('li', '支持IPv4和IPv6地址'),
+                        h('li', '实时展示命令执行结果'),
+                        h('li', '响应式设计，支持移动设备'),
+                        h('li', '支持暗色模式')
+                    ]),
+                    h('p', { style: { marginTop: '20px', color: '#909399' } }, '版本: 1.0.0')
+                ]);
+            }
+        };
+        
+        // 帮助页面
+        const HelpView = {
+            render() {
+                return h('div', { class: 'tool-panel' }, [
+                    h('h2', [h(resolveComponent('el-icon-question-filled')), ' 使用帮助']),
+                    h(ElDivider),
+                    h('h3', 'Traceroute'),
+                    h('p', 'Traceroute 命令用于显示数据包到达目标所经过的路由器。'),
+                    h('p', '使用方法：选择命令"Traceroute"，输入目标IP地址或域名，点击"执行"按钮。'),
+                    
+                    h('h3', { style: { marginTop: '15px' } }, 'Ping'),
+                    h('p', 'Ping 命令用于测试与目标主机的连通性。'),
+                    h('p', '使用方法：选择命令"Ping"，输入目标IP地址或域名，点击"执行"按钮。'),
+                    
+                    h('h3', { style: { marginTop: '15px' } }, 'MTR'),
+                    h('p', 'MTR 命令结合了 traceroute 和 ping 的功能，可以实时显示网络连接情况。'),
+                    h('p', '使用方法：选择命令"MTR"，输入目标IP地址或域名，点击"执行"按钮。'),
+                    
+                    h('h3', { style: { marginTop: '15px' } }, '常见问题'),
+                    h('p', { style: { fontWeight: 'bold' } }, '问：为什么命令执行时间较长？'),
+                    h('p', '答：网络诊断工具需要等待网络响应，根据网络状况和目标距离，可能需要3-60秒不等。'),
+                    h('p', { style: { fontWeight: 'bold', marginTop: '10px' } }, '问：为什么有些IP地址无法访问？'),
+                    h('p', '答：这可能是由于防火墙策略、路由问题或目标主机不响应ICMP包所致。')
+                ]);
+            }
+        };
+        
+        // 页脚组件
+        const AppFooter = {
+            setup() {
+                const currentTime = ref(new Date().toLocaleTimeString());
+                const quote = ref('青，取之于蓝而青于蓝。');
+                
+                // 计时器
+                let timer;
+                
+                onMounted(() => {
+                    // 定时更新时间
+                    timer = setInterval(() => {
+                        currentTime.value = new Date().toLocaleTimeString();
+                    }, 1000);
+                    
+                    // 获取一言
+                    fetchQuote();
+                });
+                
+                onUnmounted(() => {
+                    clearInterval(timer);
+                });
+                
+                // 获取一言
+                const fetchQuote = async () => {
+                    try {
+                        const response = await fetch('https://v1.hitokoto.cn');
+                        const data = await response.json();
+                        quote.value = data.hitokoto;
+                    } catch (error) {
+                        console.error('获取一言失败:', error);
+                    }
+                };
+                
+                return {
+                    currentTime,
+                    quote
+                };
+            },
+            render() {
+                return h('footer', { class: 'footer' }, [
+                    h('div', [
+                        h('span', this.quote),
+                        h('span', { style: { marginLeft: '15px', opacity: '0.6' } }, this.currentTime)
+                    ])
+                ]);
+            }
+        };
+
+        // 注册Element Plus图标组件
+        function registerElementPlusIcons(app) {
+            for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+                app.component(`el-icon-${kebabCase(key)}`, component);
+            }
+            
+            // 注册旧版图标名称的映射
+            app.component('el-icon-connection', ElementPlusIconsVue.Connection);
+            app.component('el-icon-house', ElementPlusIconsVue.House);
+            app.component('el-icon-info-filled', ElementPlusIconsVue.InfoFilled);
+            app.component('el-icon-question-filled', ElementPlusIconsVue.QuestionFilled);
+            app.component('el-icon-monitor', ElementPlusIconsVue.Monitor);
+            app.component('el-icon-position', ElementPlusIconsVue.Location);
+            app.component('el-icon-video-play', ElementPlusIconsVue.VideoPlay);
+            app.component('el-icon-terminal', ElementPlusIconsVue.Terminal);
+            app.component('el-icon-loading', ElementPlusIconsVue.Loading);
+            app.component('el-icon-sunny', ElementPlusIconsVue.Sunny);
+            app.component('el-icon-moon', ElementPlusIconsVue.Moon);
+        }
+        
+        // 工具函数：转换驼峰为短横线命名
+        function kebabCase(str) {
+            return str.replace(/([A-Z])/g, '-$1').toLowerCase().substring(1);
+        }
+        
+        const app = createApp(App);
         
         app.use(ElementPlus);
+        registerElementPlusIcons(app);
+        
+        // 添加全局解析组件的函数
+        app.config.globalProperties.resolveComponent = (name) => {
+            return app._context.components[name];
+        };
+        window.resolveComponent = (name) => {
+            return app._context.components[name];
+        };
+        
         app.mount('#app');
     </script>
 </body>
